@@ -1,0 +1,153 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RetailMart Product Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f3f4f6;
+            padding: 30px;
+        }
+
+        h1 { color: #1f2937; }
+
+        .cards {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            min-width: 180px;
+            box-shadow: 0 2px 8px #0001;
+        }
+
+        .value {
+            font-size: 26px;
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        table {
+            margin-top: 24px;
+            width: 100%;
+            background: white;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th { background: #e5e7eb; }
+    </style>
+</head>
+<body>
+    <h1>RetailMart Dashboard</h1>
+    <p>Product inventory overview</p>
+
+    <div class="cards">
+        <div class="card">
+            Total Products
+            <div class="value" id="totalProducts">0</div>
+        </div>
+
+        <div class="card">
+            Total Stock
+            <div class="value" id="totalStock">0</div>
+        </div>
+
+        <div class="card">
+            Inventory Value
+            <div class="value" id="inventoryValue">₹0</div>
+        </div>
+    </div>
+
+    <h2>Products</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Product</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Stock</th>
+            </tr>
+        </thead>
+        <tbody id="productTable"></tbody>
+    </table>
+
+    <script>
+        async function loadDashboard() {
+            try {
+                const response = await fetch("products.json");
+
+                if (!response.ok) {
+                    throw new Error("Could not load products.json");
+                }
+
+                const products = await response.json();
+
+                const totalStock = products.reduce(
+                    (sum, p) => sum + Number(p.stock), 0
+                );
+
+                const inventoryValue = products.reduce(
+                    (sum, p) => sum + Number(p.price) * Number(p.stock), 0
+                );
+
+                document.getElementById("totalProducts").textContent =
+                    products.length;
+
+                document.getElementById("totalStock").textContent =
+                    totalStock;
+
+                document.getElementById("inventoryValue").textContent =
+                    inventoryValue.toLocaleString("en-IN", {
+                        style: "currency",
+                        currency: "INR",
+                        maximumFractionDigits: 2
+                    });
+
+                document.getElementById("productTable").innerHTML =
+                    products.map(p => `
+                        <tr>
+                            <td>${p.product_id}</td>
+                            <td>${escapeHTML(p.product_name)}</td>
+                            <td>${escapeHTML(p.category)}</td>
+                            <td>${Number(p.price).toLocaleString("en-IN")}</td>
+                            <td>${p.stock}</td>
+                        </tr>
+                    `).join("");
+
+            } catch (error) {
+                document.body.insertAdjacentHTML(
+                    "beforeend",
+                    "<p>Dashboard error: " + error.message + "</p>"
+                );
+            }
+        }
+
+        function escapeHTML(value) {
+            return String(value).replace(/[&<>"']/g, char => ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;"
+            })[char]);
+        }
+
+        loadDashboard();
+    </script>
+</body>
+</html>
